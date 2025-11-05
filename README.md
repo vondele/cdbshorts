@@ -11,3 +11,24 @@ Generate puzzles from the cdb database, which are unique best moves that change 
 ### unseen
 
 Check positions in the cdb local copy for positions where an unseen move to an existing cdb position would change the evaluation of the position 'significantly'.
+
+## usage
+
+### building
+
+See [cdbdirect](https://github.com/vondele/cdbdirect?tab=readme-ov-file#building) as it is a prerequisite for building this project.
+
+```bash
+make -j all  TERARKDBROOT=/foo/bar1/ CDBDIRECTROOT=/foo/bar2/ CHESS_PATH=/foo/bar3/
+```
+
+or
+
+```bash
+make -j puzzles TERARKDBROOT=/foo/bar1/ CDBDIRECTROOT=/foo/bar2/ CHESS_PATH=/foo/bar3/
+
+```
+
+### executing
+
+currently the shorts have no config options, except in the source (e.g. max_entries), just executing the binaries without arguments will do.
