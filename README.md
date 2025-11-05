@@ -16,6 +16,10 @@ Check positions in the cdb local copy for positions where an unseen move to an e
 
 Check positions in cdb local copy with one scored move, out of multiple legal that connect to a scored position.
 
+### books
+
+construct opening books, with properties on the eval as well as the PV
+
 ## usage
 
 ### building
