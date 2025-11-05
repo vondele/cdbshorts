@@ -77,9 +77,15 @@ int main() {
   std::cout << "Fake leaf distribution after " << max_entries
             << " entries written to fake_leaves_distribution.xy\n";
   std::ofstream fake_leaves_file("fake_leaves_distribution.xy");
-  for (size_t i = 0; i < num_buckets; ++i)
+  size_t total_fake = 0;
+  for (size_t i = 0; i < num_buckets; ++i) {
     fake_leaves_file << i << " " << count_fake[i] << "\n";
+    total_fake += count_fake[i].load();
+  }
   fake_leaves_file.close();
+  std::cout << "Total fake leaves: " << total_fake << "\n";
+  std::cout << "Percentage: " << 100 * double(total_fake) / max_entries
+            << std::endl;
 
   cdbdirect_finalize(handle);
   return 0;
