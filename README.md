@@ -20,6 +20,10 @@ Check positions in cdb local copy with one scored move, out of multiple legal th
 
 construct opening books, with properties on the eval as well as the PV
 
+### longpv
+
+find longer PVs for given fens
+
 ## usage
 
 ### building
