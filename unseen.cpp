@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -43,7 +44,7 @@ int main() {
           if (it != scored.end())
             continue;
           board.makeMove<true>(move);
-          auto r = cdbdirect_get(handle, board.getFen(false));
+          auto r = cdbdirect_wrapper(handle, board);
           board.unmakeMove(move);
           if (r.size() > 1 && -r[0].second > scored[0].second + 5) {
             count_unseen.fetch_add(1, std::memory_order_relaxed);

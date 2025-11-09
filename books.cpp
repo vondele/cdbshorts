@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -72,7 +73,7 @@ int main() {
         while (true) {
           pv[ply] = move;
           board.makeMove<true>(move);
-          auto r = cdbdirect_get(handle, board.getFen(false));
+          auto r = cdbdirect_wrapper(handle, board);
           if (r.size() < 2 || ply == pv_len - 1)
             break;
           if (r.size() >= 3 &&

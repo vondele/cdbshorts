@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -61,7 +62,7 @@ int main() {
 
         Move move = uci::uciToMove(board, scored[0].first);
         board.makeMove<true>(move);
-        auto r = cdbdirect_get(handle, board.getFen(false));
+        auto r = cdbdirect_wrapper(handle, board);
         board.unmakeMove(move);
 
         if (r.size() > 1)

@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <cmath>
 #include <cstdint>
 #include <fstream>
@@ -58,14 +59,12 @@ int main(int argc, char **argv) {
 
     for (auto &p : *current_positions) {
       board = Board::Compact::decode(p);
-      // probe fen
-      std::string fen = board.getFen(false);
-      auto r = cdbdirect_get(handle, fen);
+      auto r = cdbdirect_wrapper(handle, board);
 
-      // if no moves, output the fen as missing in cdb
-      if (r.size() <= 1) {
+      // if no moves for eligible position, output the fen as missing in cdb
+      if (r.size() == 1 && r[0].second == -2) {
         missing_count++;
-        missing_fens_file << fen << "\n";
+        missing_fens_file << board.getFen(false) << "\n";
       } else {
         for (int i = 0; i < r.size() - 1; i++) {
           if (r[i].second == r[0].second) {
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
         }
       }
     }
-    std::cout << "Cumulative missing Fens at depth " << ++depth << " : "
+    std::cout << "Cumulative missing fens at depth " << ++depth << " : "
               << missing_count
               << " number of fens on PV front: " << next_positions->size()
               << std::endl;
