@@ -28,6 +28,10 @@ find longer PVs for given fens
 
 find the fens that are PV endpoints no longer in cdb
 
+### edgy
+
+find fens that are not in cdb, but are the result of a best move from a cdb position with an edgy (close to +- 100 cp) eval.
+
 ## usage
 
 ### building
