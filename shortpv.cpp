@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <cmath>
 #include <cstdint>
 #include <fstream>
@@ -22,18 +23,14 @@ template <> struct hash<PackedBoard> {
 } // namespace std
 
 int main(int argc, char **argv) {
-  std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
-
-  std::uint64_t db_size = cdbdirect_size(handle);
-  std::cout << "DB count: " << db_size << std::endl;
-
   std::string fen;
   fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -"; // 1. d4
-  //
+
   if (argc == 2)
     fen = argv[1];
 
-  std::cout << "Looking at fen: " << fen << std::endl;
+  Board board(fen, true);
+  std::cout << "Looking at fen: " << board.getXfen(false) << std::endl;
 
   std::unordered_set<PackedBoard> positions_a;
   std::unordered_set<PackedBoard> positions_b;
@@ -41,7 +38,6 @@ int main(int argc, char **argv) {
   std::unordered_set<PackedBoard> *current_positions = &positions_a;
   std::unordered_set<PackedBoard> *next_positions = &positions_b;
 
-  Board board(fen);
   PackedBoard packed = Board::Compact::encode(board);
   current_positions->insert(packed);
 
@@ -51,6 +47,10 @@ int main(int argc, char **argv) {
   std::cout << "Output missing fens to file: " << file_name << std::endl;
   std::ofstream missing_fens_file(file_name);
 
+  std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
+  std::uint64_t db_size = cdbdirect_size(handle);
+  std::cout << "DB count: " << db_size << std::endl;
+
   // keep looping until no more positions or we reach a large number
   while (current_positions->size() > 0 and
          current_positions->size() < 1000000000 and missing_count < 100000) {
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     for (auto &p : *current_positions) {
       board = Board::Compact::decode(p);
       // probe fen
-      std::string fen = board.getFen(false);
+      std::string fen = board.getXfen(false);
       auto r = cdbdirect_get(handle, fen);
 
       // if no moves, output the fen as missing in cdb
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
       } else {
         for (int i = 0; i < r.size() - 1; i++) {
           if (r[i].second == r[0].second) {
-            Move move = uci::uciToMove(board, r[i].first);
+            Move move = cdbuci_to_move(board, r[i].first);
             board.makeMove(move);
             next_positions->insert(Board::Compact::encode(board));
             board.unmakeMove(move);

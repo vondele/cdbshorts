@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -22,7 +23,6 @@ float cp_to_score(int cp) {
 
 int main() {
   std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
-
   std::uint64_t db_size = cdbdirect_size(handle);
   std::cout << "DB count: " << db_size << std::endl;
 
@@ -44,9 +44,9 @@ int main() {
     if (scored.size() >= 6) {
       auto diff = cp_to_score(scored[0].second) - cp_to_score(scored[1].second);
       if (diff > 0.4) {
-        Board board(fen);
+        Board board(fen, true);
         if (!board.inCheck()) {
-          Move m = uci::uciToMove(board, scored[0].first);
+          Move m = cdbuci_to_move(board, scored[0].first);
           if (peek % 10 == 0 && !board.isCapture(m) &&
               m.promotionType() != PieceType::NONE &&
               board.givesCheck(m) == CheckType::NO_CHECK) // non-forcing move

@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <cmath>
 #include <cstdint>
 #include <iostream>
@@ -19,7 +20,7 @@ std::vector<Move> pv_explore(Board &board, std::vector<Move> &sequence,
   {
     std::cout << "Hit TB: ";
     for (auto &m : sequence)
-      std::cout << uci::moveToUci(m) << " ";
+      std::cout << uci::moveToUci(m, board.chess960()) << " ";
     std::cout << "\n" << std::endl;
     return pv;
   }
@@ -29,7 +30,7 @@ std::vector<Move> pv_explore(Board &board, std::vector<Move> &sequence,
     return pv;
 
   query_count++;
-  auto r = cdbdirect_get(handle, board.getFen(false));
+  auto r = cdbdirect_get(handle, board.getXfen(false));
 
   if (r.size() < 2)
     return pv;
@@ -44,7 +45,7 @@ std::vector<Move> pv_explore(Board &board, std::vector<Move> &sequence,
     if (m.first != best_move.first && m.second + margin < best_move.second)
       break;
 
-    Move move = uci::uciToMove(board, m.first);
+    Move move = cdbuci_to_move(board, m.first);
     board.makeMove<true>(move);
     sequence.push_back(move);
     std::vector<Move> sub_pv =
@@ -66,20 +67,25 @@ std::vector<Move> pv_explore(Board &board, std::vector<Move> &sequence,
 }
 
 int main(int argc, char **argv) {
-  std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
+  std::string fen, chess960;
+  fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -"; // 1. d4
 
+  if (argc == 2 || argc == 3) {
+    fen = argv[1];
+    if (argc == 3)
+      chess960 = argv[2];
+  } else if (argc != 1) {
+    std::cout << "Usage: " << argv[0] << "FEN [true]" << std::endl;
+    std::exit(1);
+  }
+
+  Board board(fen, chess960 == "true");
+  std::cout << "Looking at fen: " << board.getXfen(false) << std::endl;
+
+  std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
   std::uint64_t db_size = cdbdirect_size(handle);
   std::cout << "DB count: " << db_size << std::endl;
 
-  std::string fen;
-  fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -"; // 1. d4
-  //
-  if (argc == 2)
-    fen = argv[1];
-
-  Board board(fen);
-
-  std::cout << "Looking at fen: " << fen << std::endl;
   std::vector<Move> sequence;
 
   for (int budget = 1; budget < 14; budget += 2) {
@@ -91,7 +97,7 @@ int main(int argc, char **argv) {
                 << budget << " found PV len: " << pv.size() << " using "
                 << query_count << " queries. " << fen << " moves ";
       for (auto &m : pv)
-        std::cout << uci::moveToUci(m) << " ";
+        std::cout << uci::moveToUci(m, board.chess960()) << " ";
       std::cout << "\n" << std::endl;
     }
   }
