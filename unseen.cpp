@@ -1,4 +1,5 @@
 #include "cdbdirect.h"
+#include "cdbshorts.h"
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -13,7 +14,6 @@ using namespace chess;
 
 int main() {
   std::uintptr_t handle = cdbdirect_initialize(CHESSDB_PATH);
-
   std::uint64_t db_size = cdbdirect_size(handle);
   std::cout << "DB count: " << db_size << std::endl;
 
@@ -32,25 +32,26 @@ int main() {
         // count entries
         size_t peek = count_total.fetch_add(1, std::memory_order_relaxed);
 
-        Board board(fen);
+        Board board(fen, true);
         Movelist moves;
         movegen::legalmoves(moves, board);
         for (const auto &move : moves) {
-          auto uci_move = uci::moveToUci(move);
           auto it = std::find_if(
-              scored.begin(), scored.end(),
-              [&uci_move](const auto &p) { return p.first == uci_move; });
+              scored.begin(), scored.end(), [&board, &move](const auto &p) {
+                return cdbuci_to_move(board, p.first) == move;
+              });
           if (it != scored.end())
             continue;
           board.makeMove<true>(move);
-          auto r = cdbdirect_get(handle, board.getFen(false));
+          auto r = cdbdirect_get(handle, board.getXfen(false));
           board.unmakeMove(move);
           if (r.size() > 1 && -r[0].second > scored[0].second + 5) {
             count_unseen.fetch_add(1, std::memory_order_relaxed);
             const std::lock_guard<std::mutex> lock(io_mutex);
-            // write to file
-            file_fens << fen << " " << uci_move << " " << -r[0].second << " "
-                      << scored[0].first << " " << scored[0].second << "\n";
+            // write to file, always using KxR notation for castling moves!
+            file_fens << fen << " " << uci::moveToUci(move, true) << " "
+                      << -r[0].second << " " << scored[0].first << " "
+                      << scored[0].second << "\n";
             break;
           }
         }
