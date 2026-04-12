@@ -3,13 +3,13 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <map>
 #include <queue>
 #include <set>
 #include <unistd.h>
 
 #include "cdbshorts.hpp"
 #include "external/chess.hpp"
+#include "external/parallel_hashmap/btree.h"
 #include "gameprogress.hpp"
 
 // get memory in MB
@@ -61,7 +61,10 @@ int main(int argc, char **argv) {
   std::priority_queue<std::pair<int, PackedBoard>,
                       std::vector<std::pair<int, PackedBoard>>, std::greater<>>
       pq_progress;
-  std::map<PackedBoard, int, EarlierBoard> to_visit;
+
+  // instead std::map<PackedBoard, int, EarlierBoard> use a more memory
+  // efficient btree_map from parallel_hashmap
+  phmap::btree_map<PackedBoard, int, EarlierBoard> to_visit;
 
   // initialize
   to_visit.insert({start_packed_board, start_depth});
